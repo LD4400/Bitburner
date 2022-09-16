@@ -1,0 +1,101 @@
+//get servers on first scan lvl
+var cList = scan('home');
+cList.push('darkweb');
+//list for servers with root access
+var aList = [];
+//default max money
+var maxMon = 0;
+//default max server
+var maxSer = 'n00dles';
+//flag to check if there's a new server
+var rerun = false;
+var pList = getPurchasedServers();
+//check servers for root access
+function checkAndFind(cServer, pServer){
+    var ports = 0;
+	//if server is not already in  aList
+	if(!aList.includes(cServer) && hasRootAccess(cServer)){
+		if(getServerMoneyAvailable(cServer) > maxMon){
+			maxMon = getServerMoneyAvailable(cServer);
+			maxSer = cServer;
+		}
+		aList.push(cServer);
+		// exec('getLit.script', 'home', 1, cServer);
+	}
+    //if server is within hack lvl and is not home
+    else if(getServerRequiredHackingLevel(cServer) <= getHackingLevel() && cServer != 'home'){
+		if(fileExists('BruteSSH.exe')){
+			brutessh(cServer);
+			ports = ports + 1;
+		}
+		if(fileExists('FTPCrack.exe')){
+			ftpcrack(cServer);
+			ports = ports + 1;
+		}
+		if(fileExists('RelaySMTP.exe')){
+			relaysmtp(cServer);
+			ports = ports + 1;
+		}
+		if(fileExists('HTTPWorm.exe')){
+			httpworm(cServer);
+			ports = ports + 1;
+		}
+		if(fileExists('SQLInject.exe')){
+			sqlinject(cServer);
+			ports = ports + 1;
+		}
+		if(ports >= getServerNumPortsRequired(cServer) && hasRootAccess(cServer) == false){
+			tprint('Nuking ' + cServer);
+			nuke(cServer);
+			if(cServer == 'w0r1d_d43m0n'){
+				tprint("Hacking W0r1dD43m0n")
+				singularity.destroyW0r1dD43m0n(12, 'startup.script')
+			}
+			rerun = true;
+			if(getServerMoneyAvailable(cServer) > maxMon){
+				maxMon = getServerMoneyAvailable(cServer);
+				maxSer = cServer;
+			}
+			aList.push(cServer);
+		}
+    }
+    //within scan lvl
+	var nList = scan(cServer);
+	if(nList.length > 0){
+		//search for servers with root access at other lvls
+		for(var i = 0; i < nList.length; i++){
+			if(nList[i] != 'home' && nList[i] != pServer){
+				checkAndFind(nList[i], cServer);
+			}
+		}
+	}
+}
+while(true){
+	//got through each server at first scan lvl
+	rerun = false;
+	aList = [];
+	maxMon = 0;
+	maxSer = 'n00dles';
+	for(var x = 0; x < cList.length; x++){
+		if(cList[x].includes("hacknet-node") == false){
+			//check servers with root access
+			checkAndFind(cList[x], 'home');
+		}
+	}
+	if(rerun == true){
+		tprint("New servers has root access!")
+		tprint("Rerunning hack scripts");
+		if(isRunning('serverLoop.script') == true){
+			kill('serverLoop.script', 'home');
+		}
+		exec('serverLoop.script', 'home', 1);
+		for(var x = 0; x < aList.length; x++){
+			exec('loop.script', 'home', 1, maxSer, aList[x]);
+		}
+		for(var x = 0; x < pList.length; x++){
+			exec('loop.script', 'home', 1, maxSer, pList[x]);
+		}
+		tprint("Backdoor check")
+		exec('/Tasks/backdoor-all-servers.js', 'home')
+	}
+}

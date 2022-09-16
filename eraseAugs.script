@@ -1,0 +1,10 @@
+emptyFiles = ['SortedFactions.txt', 'boughtOutFactions.txt']
+for(i = 0; i < emptyFiles.length; i++){
+	tprint("Clearing " + emptyFiles[i])
+	write(emptyFiles[i], "", "w")
+}
+
+fileList = ls('home', '/Sorted')
+for(x = 0; x < fileList.length; x++){
+	rm(fileList[x])
+}

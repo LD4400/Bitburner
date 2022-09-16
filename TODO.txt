@@ -1,0 +1,2 @@
+beginning.script: Add function that would check if faction.script is running for all factions
+sleeves.script: Write something to prevent idle sleeves

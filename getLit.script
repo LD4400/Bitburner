@@ -1,0 +1,10 @@
+cServer = args[0];
+var listFiles = ls(cServer, '.lit');
+if(listFiles.length > 0){
+	for(var x = 0; x < listFiles.length; x++){
+		if(!fileExists(listFiles[x], 'home') && listFiles[x] != 'A-Green-Tomorrow.lit'){
+			tprint("New lit file(s) from " + cServer + ": " + listFiles[x]);
+			scp(listFiles[x], cServer, 'home');
+		}
+	}
+}

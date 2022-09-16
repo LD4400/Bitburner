@@ -1,0 +1,516 @@
+This file contains the list of potential API break. A pattern was used to look through all your files and note the spots where you might have a problem. Not everything here is broken./ns\.scp/g
+scp arguments were switch, it is now scp(files, destination, optionally_source). If you were using 2 argument (not 3) this doesn't affect you.
+
+	loop.script
+		Line 69 scp('early-hack.script', aList[i]);
+		Line 77 scp('early-hack.script', aList);
+	serverLoop.script
+		Line 72 scp('/newserver/OP.ns', 'home', pList[y]);
+		Line 73 scp('/newserver/grow.js', 'home', pList[y]);
+		Line 74 scp('/newserver/hack.js', 'home', pList[y]);
+		Line 75 scp('/newserver/weaken.js', 'home', pList[y]);
+	getLit.script
+		Line 7 scp(listFiles[x], cServer, 'home');
+	daemon.js
+		Line 1408 await getNsDataThroughFile(ns, `await ns.scp(ns.args.slice(2), ns.args[0], ns.args[1])`,
+	remove-worst-server.js
+		Line 19 await runCommand(ns, `await ns.scp("${getFilePath('/Flags/deleting.txt')}", ns.args[0])`, '/Temp/flag-server-for-deletion.js', [minServer.name]);
+	sync-scripts.js
+		Line 18 await ns.scp(file, home, server); // No way to read a remote file, so we have to temporarily copy it home
+		Line 22 await ns.scp(file, server, home); // Update the remote copy
+
+
+/ns\.stock\.buy/g
+buy is a very common word so in order to avoid ram costs it was renamed ns.stock.buyStock
+
+	stocks.js
+		Line 73 let actualPrice = ns.stock.buy(stock.sym, numShares);
+	test.script
+		Line 1 tprint(stock.buyStock("CTYS",153900))
+	stockmaster.js
+		Line 446 let buyStockWrapper = async (ns, sym, numShares) => await transactStock(ns, sym, numShares, 'buyStock'); // ns.stock.buyStock(sym, numShares);
+		Line 447 let buyShortWrapper = async (ns, sym, numShares) => await transactStock(ns, sym, numShares, 'buyShort'); // ns.stock.buyShort(sym, numShares);
+	test.js
+		Line 3 ns.stock.buy("CTYS",153900)
+	/Temp/stock-buyShort.txt.js
+		Line 2 ns.stock.buyShort(ns.args[0], ns.args[1])
+	/Temp/stock-buyStock.txt.js
+		Line 2 ns.stock.buyStock(ns.args[0], ns.args[1])
+
+
+/ns\.stock\.sell/g
+sell is a very common word so in order to avoid ram costs it was renamed ns.stock.sellStock
+
+	stocks.js
+		Line 86 if (ns.stock.sell(stock.sym, numShares) > 0) {
+	stockmaster.js
+		Line 448 let sellStockWrapper = async (ns, sym, numShares) => await transactStock(ns, sym, numShares, 'sellStock'); // ns.stock.sellStock(sym, numShares);
+		Line 449 let sellShortWrapper = async (ns, sym, numShares) => await transactStock(ns, sym, numShares, 'sellShort'); // ns.stock.sellShort(sym, numShares);
+
+
+/ns.getFactionRep/g
+ns.getFactionRep was moved to ns.singularity.getFactionRep
+
+	stanek_copy.js
+		Line 143 const churchRep = sf4Level ? await getNsDataThroughFile(ns, 'ns.getFactionRep("Church of the Machine God")', '/Temp/stanek-reputation.txt') : 0;
+	/Temp/stanek-reputation.txt.js
+		Line 2 ns.getFactionRep("Church of the Machine God")
+
+
+/ns.getOwnedAugmentations/g
+ns.getOwnedAugmentations was moved to ns.singularity.getOwnedAugmentations
+
+	stanek_copy.js
+		Line 92 const ownedAugmentations = await getNsDataThroughFile(ns, `ns.getOwnedAugmentations(true)`, '/Temp/player-augs-purchased.txt');
+	/Temp/player-augs-purchased.txt.js
+		Line 2 ns.getOwnedAugmentations(true)
+
+
+/ns.getOwnedSourceFiles/g
+ns.getOwnedSourceFiles was moved to ns.singularity.getOwnedSourceFiles
+
+	helpers.js
+		Line 377 `Object.fromEntries(ns.getOwnedSourceFiles().map(sf => [sf.n, sf.lvl]))`,
+	/Temp/owned-source-files.txt.js
+		Line 2 Object.fromEntries(ns.getOwnedSourceFiles().map(sf => [sf.n, sf.lvl]))
+
+
+/hacking_mult/g
+ns.getPlayer().hacking_mult was moved to ns.getPlayer().mults.hacking
+
+	faction-manager.js
+		Line 215 if (strMult == "_") return "hacking_mult"; // Default if no stat was provided.
+
+
+/companyName/g
+The work system is completely reworked and ns.getPlayer().companyName no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	daemon.js
+		Line 155 * @returns {Promise<{ type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string }>} */
+	sleeve.js
+		Line 105 * @returns {Promise<{ type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string }>} */
+		Line 191 * @param {{ type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string }} playerWorkInfo
+		Line 227 const companyName = playerWorkInfo.companyName;
+		Line 228 return [`work for company '${companyName}'`, `ns.sleeve.setToCompanyWork(ns.args[0], ns.args[1])`, [i, companyName],
+		Line 229 /*   */ `helping earn rep with company ${companyName}.`];
+	work-for-factions.js
+		Line 32 { name: "Fulcrum Secret Technologies", companyName: "Fulcrum Technologies" }, // Special snowflake
+		Line 33 { name: "Silhouette", companyName: "TBD", repRequiredForFaction: 999e9 /* Hack to force work until max promotion. */ }
+		Line 508 let companyNames = preferredCompanyFactionOrder.map(f => companySpecificConfigs.find(cf => cf.name == f)?.companyName || f);
+		Line 509 let favorByCompany = await getNsDataThroughFile(ns, dictCommand('ns.singularity.getCompanyFavor(o)'), '/Temp/getCompanyFavors.txt', companyNames);
+		Line 510 let repByCompany = await getNsDataThroughFile(ns, dictCommand('ns.singularity.getCompanyRep(o)'), '/Temp/getCompanyReps.txt', companyNames);
+		Line 512 factionConfig.companyName = companyNames.sort((a, b) => (3.2e6 - repByCompany[a]) / (100 + favorByCompany[a]) - (3.2e6 - repByCompany[b]) / (100 + favorByCompany[b]))[0];
+		Line 626 * @returns {Promise<{ type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string }>} */
+		Line 728 async function getCompanyReputation(ns, companyName) {
+		Line 729 return await getNsDataThroughFile(ns, `ns.singularity.getCompanyRep(ns.args[0])`, '/Temp/getCompanyRep.txt', [companyName]);
+		Line 882 async function measureCompanyRepGainRate(ns, companyName) {
+		Line 883 return await measureRepGainRate(ns, async () => await getCompanyReputation(ns, companyName));
+		Line 970 async function checkForBackdoor(ns, companyName) {
+		Line 972 '/Temp/getServer-backdoorInstalled.txt', [serverByCompany[companyName]]);
+		Line 978 const companyName = companyConfig?.companyName || factionName; // Name of the company that gives the faction (same for all but Fulcrum)
+		Line 989 return ns.print(`Cannot yet work for "${companyName}": Need Hack ${itJob.reqHack[0] + statModifier} to get hired (current Hack: ${player.skills.hacking});`);
+		Line 990 ns.print(`Going to work for Company "${companyName}" next...`)
+		Line 991 let currentReputation, currentRole = "", currentJobTier = -1; // TODO: Derive our current position and promotion index based on player.jobs[companyName]
+		Line 994 let backdoored = await checkForBackdoor(ns, companyName);
+		Line 996 while (((currentReputation = (await getCompanyReputation(ns, companyName))) < repRequiredForFaction) && !player.factions.includes(factionName)) {
+		Line 1005 if (await tryApplyToCompany(ns, companyName, bestRoleName))
+		Line 1006 log(ns, `Successfully applied to "${companyName}" for a '${bestRoleName}' Job or Promotion`, false, 'success');
+		Line 1008 log(ns, `Application to "${companyName}" for a '${bestRoleName}' Job or Promotion failed.`, false, 'error');
+		Line 1013 const currentJob = player.jobs[companyName];
+		Line 1053 if (await tryApplyToCompany(ns, companyName, currentRole)) {
+		Line 1055 log(ns, `Unexpected '${currentRole}' promotion from ${currentJob} to "${player.jobs[companyName]}. Promotion logic must be off..."`, false, 'warning');
+		Line 1059 if (!isStudying && (!isWorking || currentWork.companyName != companyName)) {
+		Line 1061 log(ns, `Work for company ${companyName} was interrupted (Now: ${Json.stringify(currentWork)}). Restarting...`, false, 'warning');
+		Line 1067 if (await getNsDataThroughFile(ns, `ns.singularity.workForCompany(ns.args[0], ns.args[1])`, '/Temp/workForCompany.txt', [companyName, focusArg])) {
+		Line 1071 log(ns, `Something went wrong, failed to start working for company "${companyName}".`, false, 'error');
+		Line 1079 backdoored = await checkForBackdoor(ns, companyName);
+		Line 1083 const repGainRate = !isWorking ? 0 : await measureCompanyRepGainRate(ns, companyName);
+		Line 1086 ns.print(`Currently a "${player.jobs[companyName]}" ('${currentRole}' #${currentJobTier}) for "${companyName}" earning ${formatNumberShort(repGainRate)} rep/sec. ` +
+		Line 1097 ns.print(`Attained ${repRequiredForFaction.toLocaleString('en')} rep with "${companyName}".`);
+		Line 1102 ns.print(`Stopped working for "${companyName}" repRequiredForFaction: ${repRequiredForFaction.toLocaleString('en')} ` +
+	companyRep.script
+		Line 18 function assignSleeve(companyName){
+		Line 26 sleeve.setToCompanyWork(x, companyName)
+		Line 27 tprint("Sleeve " + x + " assigned to work for " + companyName)
+
+
+/crimeType/g
+The work system is completely reworked and ns.getPlayer().crimeType no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	daemon.js
+		Line 155 * @returns {Promise<{ type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string }>} */
+	sleeve.js
+		Line 105 * @returns {Promise<{ type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string }>} */
+		Line 191 * @param {{ type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string }} playerWorkInfo
+	work-for-factions.js
+		Line 567 let crimeType = currentWork.crimeType;
+		Line 568 if (!lastCrime || !(crimeType && crimeType.toLowerCase().includes(lastCrime))) {
+		Line 570 log(ns, `Committing Crime "${lastCrime}" Interrupted. (Now: ${crimeType}) Restarting...`, false, 'warning');
+		Line 626 * @returns {Promise<{ type: "COMPANY"|"FACTION"|"CLASS"|"CRIME", cyclesWorked: number, crimeType: string, classType: string, location: string, companyName: string, factionName: string, factionWorkType: string }>} */
+
+
+/isWorking/g
+The work system is completely reworked and ns.getPlayer().isWorking no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	work-for-factions.js
+		Line 801 let isWorking = false;
+		Line 807 if (isWorking) { // Log a warning if we discovered that work we previously began was disrupted
+		Line 809 isWorking = false;
+		Line 813 isWorking = true;
+		Line 993 let isStudying = false, isWorking = false;
+		Line 1037 [isWorking, isStudying] = [false, true];
+		Line 1059 if (!isStudying && (!isWorking || currentWork.companyName != companyName)) {
+		Line 1060 if (isWorking) { // Log a warning if we discovered that work we previously began was disrupted
+		Line 1062 isWorking = false;
+		Line 1068 isWorking = true;
+		Line 1083 const repGainRate = !isWorking ? 0 : await measureCompanyRepGainRate(ns, companyName);
+		Line 1084 const eta = !isWorking ? "?" : formatDuration(1000 * ((requiredRep || repRequiredForFaction) - currentReputation) / repGainRate);
+
+
+/workRepGainRate/g
+The work system is completely reworked and ns.getPlayer().workRepGainRate no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	work-for-factions.js
+		Line 866 //return (await getPlayerInfo(ns)).workRepGainRate;
+
+
+/className/g
+The work system is completely reworked and ns.getPlayer().className no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	stats.js
+		Line 38 let p = doc.createElement("p"); p.appendChild(doc.createTextNode(txt)); p.className = "tooltip"; //p.title = tt;
+		Line 39 let s = doc.createElement("span"); p.appendChild(s); s.appendChild(doc.createTextNode(tt)); s.className = "tooltiptext";
+	som.js
+		Line 22 ns.tprintf("INFO className: \"" + box.className + "\"");
+
+
+/hacking/g
+The work system is completely reworked and ns.getPlayer().hacking no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	/newserver/OP.ns
+		Line 29 var WeakenTime = (ns.formulas.hacking.weakenTime(fserver,player));
+		Line 46 WeakenTime = (ns.formulas.hacking.weakenTime(fserver,player));
+		Line 57 var HPercent = (ns.formulas.hacking.hackPercent(fserver,player)*100);
+		Line 58 var GPercent = (ns.formulas.hacking.growPercent(fserver,1,player,1));
+		Line 59 WeakenTime = (ns.formulas.hacking.weakenTime(fserver,player));
+		Line 60 var GrowTime = (ns.formulas.hacking.growTime(fserver,player));
+		Line 61 var HackTime = (ns.formulas.hacking.hackTime(fserver,player));
+	serverLoop.script
+		Line 24 var HPercent = (formulas.hacking.hackPercent(fserver,player)*100);
+		Line 25 var GPercent = (formulas.hacking.growPercent(fserver,1,player,1));
+		Line 26 WeakenTime = (formulas.hacking.weakenTime(fserver,player));
+	analyze-hack.js
+		Line 7 ['hack-percent', -1], // Compute gains when hacking a certain percentage of each server's money. -1 estimates hack percentage based on current ram available, capped at 98%
+		Line 43 if (options['at-hack-level']) player.skills.hacking = options['at-hack-level'];
+		Line 45 // Compute the total RAM available to us on all servers (e.g. for running hacking scripts)
+		Line 51 // Helper to compute server gain/exp rates at a specific hacking level
+		Line 57 const real_player_hack_skill = player.skills.hacking;
+		Line 58 player.skills.hacking = hackLevel;
+		Line 61 const weakenCost = weaken_ram * ns.formulas.hacking.weakenTime(server, player);
+		Line 62 const growCost = grow_ram * ns.formulas.hacking.growTime(server, player) + weakenCost * 0.004 / 0.05;
+		Line 63 const hackCost = hack_ram * ns.formulas.hacking.hackTime(server, player) + weakenCost * 0.002 / 0.05;
+		Line 66 const growGain = Math.log(ns.formulas.hacking.growPercent(server, 1, player, 1));
+		Line 67 const hackGain = ns.formulas.hacking.hackPercent(server, player);
+		Line 72 const hackProfit = server.moneyMax * hack_percent * ns.formulas.hacking.hackChance(server, player);
+		Line 75 const expRate = ns.formulas.hacking.hackExp(server, player) * (1 + 0.002 / 0.05) / (hackCost) * 1000;
+		Line 76 // The practical cap on revenue is based on your hacking scripts. For my hacking scripts this is about 20% per second, adjust as needed
+		Line 80 `Limit: ${formatMoney(hackProfit / ram_total)}, Exp: ${expRate.toPrecision(3)}, Hack Chance: ${(ns.formulas.hacking.hackChance(server, player) * 100).toPrecision(3)}% (${server.hostname})`);
+		Line 87 player.skills.hacking = real_player_hack_skill; // Restore the real hacking skill if we changed it temporarily
+		Line 91 ns.print(`All? ${options['all']} Player hack: ${player.skills.hacking} Ram total: ${ram_total}`);
+		Line 96 (options['all'] || server.hasAdminRights && server.requiredHackingSkill <= player.skills.hacking));
+		Line 98 // First address the servers within our hacking level
+		Line 99 const unlocked_servers = servers.filter(s => s.requiredHackingSkill <= player.skills.hacking)
+		Line 101 [server.theoreticalGainRate, server.gainRate, server.expRate] = getRatesAtHackLevel(server, player, player.skills.hacking);
+		Line 107 const locked_servers = servers.filter(s => s.requiredHackingSkill > player.skills.hacking).sort((a, b) => a.requiredHackingSkill - b.requiredHackingSkill)
+		Line 109 // We will need to fake the hacking skill to get the numbers for when this server will first be unlocked, but to keep the comparison
+		Line 130 let serverListByGain = `Servers in order of best to worst hack money at Hack ${player.skills.hacking}:`;
+		Line 142 let serverListByExp = `Servers in order of best to worst hack exp at Hack ${player.skills.hacking}:`;
+	daemon.js
+		Line 11 // Its primary job is to manage hacking servers for income, but it also manages launching
+		Line 33 ['n', false], // Can toggle on using hacknet nodes for extra hacking ram (at the expense of hash production)
+		Line 67 // track how costly (in security) a growth/hacking thread is.
+		Line 104 let _allServers = (/**@returns{Server[]}*/() => [])(); // Array of Server objects - our internal model of servers for hacking
+		Line 119 let useHacknetNodes = false; // "-n" command line arg - Can toggle using hacknet nodes for extra hacking ram
+		Line 150 function playerHackSkill() { return _cachedPlayerInfo.skills.hacking; }
+		Line 152 function getPlayerHackingGrowMulti() { return _cachedPlayerInfo.mults.hacking_grow; };
+		Line 295 // In BN8 (stocks-only bn) and others with hack income disabled, don't waste money on improving hacking infrastructure unless we have plenty of money to spare
+		Line 325 let utilization = getTotalNetworkUtilization(); // Utilization-based heuristics for when we likely could use more RAM for hacking
+		Line 394 // Before starting normal hacking, fire a couple hack XP-focused cycle using a chunk of free RAM to further boost RAM
+		Line 582 // So get the first un-prepped server that is within our hacking level, and move it to the front of the list.
+		Line 961 this.ns.formulas.hacking.hackPercent(this.server, _cachedPlayerInfo); // hackAnalyzePercent(this.name) / 100;
+		Line 1223 args.push(options['silent-misfires'] || // Optional arg to disable toast warnings about a failed hack if hacking money gain is disabled
+		Line 1511 if (!xpOnly || loopingMode) // Only use basic single-target hacking unless we're in XP mode (and not looping)
+		Line 1674 let shouldManipulateHack = []; // Dict of server names, with a value of "true" if we should turn on stock-manipulation when hacking this server
+		Line 1696 if (pos.sharesLong > 0 || pos.sharesShort > 0) newServersWithOwnedStock.push(server); // Keep track of servers we own stock in so we can prioritize hacking them in stockFocus mode
+		Line 1809 /** @returns {Promise<Server[]>} Sorted in the order we should prioritize spending ram on targeting them (for hacking) */
+	faction-manager.js
+		Line 66 "faction_rep", "hacking_chance", "hacking_exp", "hacking_grow", "hacking_money", "hacking", "hacking_speed", "strength_exp", "strength", "work_money",
+		Line 147 ['hacking', 'faction_rep', 'company_rep', 'charisma', 'hacknet', 'crime_money']; // Otherwise get hacking + rep boosting, etc. for unlocking augs more quickly
+		Line 205 .replace("agility", "agi").replace("strength", "str").replace("charisma", "cha").replace("defense", "def").replace("dexterity", "dex").replace("hacking", "hack")
+		Line 215 if (strMult == "_") return "hacking_mult"; // Default if no stat was provided.
+	sleeve.js
+		Line 6 const works = ['security', 'field', 'hacking']; // When doing faction work, we prioritize physical work since sleeves tend towards having those stats be highest
+		Line 349 (crimeStats.hacking_success_weight || 0) * sleeve.hacking +
+	work-for-factions.js
+		Line 53 "The Black Hand", // Fastest sources of hacking augs after the above companies
+		Line 61 "ECorp", // Offers 2.26 multi worth of company_rep and major hacking stat boosts (1.51 hack / 1.54 exp / 1.43 success / 3.0 grow / 2.8 money / 1.25 speed), but high rep reqs
+		Line 62 "Clarke Incorporated", // Biggest boost to hacking after above factions (1.38)
+		Line 63 "OmniTek Incorporated", // Next big boost to hacking after above factions (1.20) (NWO is bigger, but this has lower Cha reqs.)
+		Line 64 "NWO", // Biggest boost to hacking after above factions (1.26)
+		Line 68 "Fulcrum Secret Technologies", // Big boosts to company_rep and hacking, but requires high hack level to backdoor their server, so might have to be left until later
+		Line 117 ['hacking', 'faction_rep', 'company_rep', 'charisma', 'hacknet', 'crime_money']
+		Line 279 if (player.skills.hacking < fulcrummHackReq - 10) { // Assume that if we're within 10, we'll get there by the time we've earned the invite
+		Line 369 const reqHackingOrCombat = ["Daedalus"]; // Special case factions that require only hacking or combat stats, not both
+		Line 412 // Hash for special-case factions (just 'Daedalus' for now) requiring *either* hacking *or* combat
+		Line 414 // Compare roughly how long it will take to train up our hacking stat
+		Line 415 (requiredHackByFaction[factionName] - player.skills.hacking) / classHeuristic('hacking') <
+		Line 418 ns.print(`Ignoring combat requirement for ${factionName} as we are more likely to unlock them via hacking stats.`);
+		Line 443 if (player.skills.hacking < serverReqHackingLevel) {
+		Line 444 ns.print(`${reasonPrefix} you must first backdoor ${requirement}, which needs hack: ${serverReqHackingLevel}, Have: ${player.skills.hacking}`);
+		Line 448 if (requirement && player.skills.hacking < requirement &&
+		Line 451 ns.print(`${reasonPrefix} you have insufficient hack level. Need: ${requirement}, Have: ${player.skills.hacking}`);
+		Line 455 else if (classHeuristic('hacking') < em)
+		Line 456 return ns.print(`Your combination of Hacking mult (${formatNumberShort(player.mults.hacking)}), exp_mult ` +
+		Line 457 `(${formatNumberShort(player.mults.hacking_exp)}), and bitnode hacking / study exp mults ` +
+		Line 459 `are probably too low to increase hack from ${player.skills.hacking} to ${requirement} in a reasonable amount of time ` +
+		Line 460 `(${formatNumberShort(classHeuristic('hacking'))} < ${formatNumberShort(em, 2)} - configure with --training-stat-per-multi-threshold)`);
+		Line 472 workedForInvite = await monitorStudies(ns, 'hacking', requirement);
+		Line 473 // If we studied for hacking, and were awaiting a backdoor, spawn the backdoor script now
+		Line 476 if (player.skills.hacking > requirement) {
+		Line 477 ns.print(`Current hacking level ${player.skills.hacking} seems to now meet the backdoor requirement ${requirement}. Spawning backdoor-all-servers.js...`);
+		Line 739 *  @returns {Promise<Number>} The hacking level required for the specified server */
+		Line 890 for (const work of ["security", "field", "hacking"]) {
+		Line 916 if (player.skills.hacking < 225)
+		Line 917 return ns.print(`Hacking Skill ${player.skills.hacking} is to low to work for any megacorps (min req. 225).`);
+		Line 988 if (itJob.reqHack[0] + statModifier > player.skills.hacking) // We don't qualify to work for this company yet if we can't meet IT qualifications (lowest there are)
+		Line 989 return ns.print(`Cannot yet work for "${companyName}": Need Hack ${itJob.reqHack[0] + statModifier} to get hired (current Hack: ${player.skills.hacking});`);
+		Line 999 const getTier = job => Math.min(job.reqRep.filter(r => r <= currentReputation).length, job.reqHack.filter(h => h <= player.skills.hacking).length, job.reqCha.filter(c => c <= player.skills.charisma).length) - 1;
+		Line 1026 if (currentReputation >= requiredRep && player.skills.hacking >= requiredHack && player.skills.charisma < requiredCha && !options['no-studying']) {
+		Line 1088 `${status}\nCurrent player stats are Hack:${player.skills.hacking} ${player.skills.hacking >= (requiredHack || 0) ? '✓' : '✗'} ` +
+	/Remote/hack-target.js
+		Line 11 if (cycleTime < 100) cycleTime = Math.max(1, Math.min(5, cycleTime * 2)); // For fast hacking loops, inject a delay on hack in case grow/weaken are running a bit slow.
+	/Remote/manualhack-target.js
+		Line 11 if (cycleTime < 100) cycleTime = Math.max(1, Math.min(5, cycleTime * 2)); // For fast hacking loops, inject a delay on hack in case grow/weaken are running a bit slow.
+	autopilot.js
+		Line 24 ['high-hack-threshold', 8000], // Once hack level reaches this, we start daemon in high-performance hacking mode
+		Line 171 if (player.skills.hacking < 2500) return reserveForDaedalus = false;
+		Line 189 // If we have sufficient augs and hacking, all we need is the money (100b)
+		Line 206 '/Temp/wd-hackingLevel.txt');
+		Line 210 let bnComplete = player.skills.hacking >= wdHack;
+		Line 219 `(${(player.skills.hacking >= wdHack ? `hack (${wdHack.toFixed(0)})` : 'bladeburner')} win condition)`;
+		Line 246 `${player.skills.hacking >= wdHack ? "by hacking W0r1dD43m0n" : "on the bladeburner BlackOps tab"}).`, true);
+		Line 330 const [bestServer, gain] = incomeByServer.filter(s => dictServerHackReqs[s.hostname] <= player.skills.hacking)
+		Line 340 const hackThreshold = options['high-hack-threshold']; // If player.skills.hacking level is about 8000, run in "start-tight" mode
+		Line 341 const daemonArgs = (player.skills.hacking < hackThreshold || player.bitNodeN == 8) ? [] :
+		Line 346 "--recovery-thread-padding", 1.0 + (player.skills.hacking - hackThreshold) / 1000.0];
+		Line 368 if ((!daemon || player.skills.hacking >= hackThreshold && !daemon.args.includes("--looping-mode") && !daemon.args.includes("--xp-only")) && !stanekRunning) {
+		Line 369 if (player.skills.hacking >= hackThreshold && !(player.bitNodeN == 8))
+		Line 370 log(ns, `INFO: Hack level (${player.skills.hacking}) is >= ${hackThreshold} (--high-hack-threshold): Starting daemon.js in high-performance hacking mode.`);
+	stanek.js.create.js
+		Line 68 "height": 4, "width": 4, "fragments": [ // Note: Possible to fit 4 fragments, but have to sacrifice a hacking mult piece
+		Line 89 // NOTE: Things get pretty subjective after this. Should we prioritize boosting hacking multi or adding more stats?
+	companyRep.script
+		Line 36 //Make sure we have minimum hacking skill
+		Line 38 while(hackStat.hacking < 275){
+	optimize-stanek.js
+		Line 79 , FragmentId.HackingGrow, FragmentId.HackingMoney // Priority 4, improves growth, income for RAM from hacking?
+
+
+/strength/g
+The work system is completely reworked and ns.getPlayer().strength no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	bladeburner.js
+		Line 422 if (player.skills.strength < 100 || player.skills.defense < 100 || player.skills.dexterity < 100 || player.skills.agility < 100)
+		Line 424 `(Currently Str: ${player.skills.strength}, Def: ${player.skills.defense}, Dex: ${player.skills.dexterity}, Agi: ${player.skills.agility})`);
+	faction-manager.js
+		Line 66 "faction_rep", "hacking_chance", "hacking_exp", "hacking_grow", "hacking_money", "hacking", "hacking_speed", "strength_exp", "strength", "work_money",
+		Line 205 .replace("agility", "agi").replace("strength", "str").replace("charisma", "cha").replace("defense", "def").replace("dexterity", "dex").replace("hacking", "hack")
+	sleeve.js
+		Line 7 const trainStats = ['strength', 'defense', 'dexterity', 'agility'];
+		Line 26 ['train-to-strength', 105], // Sleeves will go to the gym until they reach this much Str
+		Line 345 crimeName == "homicide" ? { difficulty: 1, strength_success_weight: 2, defense_success_weight: 2, dexterity_success_weight: 0.5, agility_success_weight: 0.5 } :
+		Line 346 crimeName == "mug" ? { difficulty: 0.2, strength_success_weight: 1.5, defense_success_weight: 0.5, dexterity_success_weight: 1.5, agility_success_weight: 0.5, } :
+		Line 350 (crimeStats.strength_success_weight || 0) * sleeve.strength +
+	work-for-factions.js
+		Line 67 "KuaiGong International", // 1.40 to agility, defense, strength
+		Line 401 const physicalStats = ["strength", "defense", "dexterity", "agility"];
+		Line 554 `Str: ${player.skills.strength}, Def: ${player.skills.defense}, Dex: ${player.skills.dexterity}, Agi: ${player.skills.agility})`);
+		Line 555 let anyStatsDeficient = (p) => p.skills.strength < reqStats || p.skills.defense < reqStats ||
+
+
+/defense/g
+The work system is completely reworked and ns.getPlayer().defense no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	bladeburner.js
+		Line 422 if (player.skills.strength < 100 || player.skills.defense < 100 || player.skills.dexterity < 100 || player.skills.agility < 100)
+		Line 424 `(Currently Str: ${player.skills.strength}, Def: ${player.skills.defense}, Dex: ${player.skills.dexterity}, Agi: ${player.skills.agility})`);
+	faction-manager.js
+		Line 65 const stat_multis = ["agility_exp", "agility", "charisma_exp", "charisma", "company_rep", "crime_money", "crime_success", "defense_exp", "defense", "dexterity_exp", "dexterity",
+		Line 205 .replace("agility", "agi").replace("strength", "str").replace("charisma", "cha").replace("defense", "def").replace("dexterity", "dex").replace("hacking", "hack")
+	gangs.js
+		Line 252 task = assignedTasks[member.name]; // Hack: Spare low-defense members from engaging in in warfare since they have a higher chance of dying
+	sleeve.js
+		Line 7 const trainStats = ['strength', 'defense', 'dexterity', 'agility'];
+		Line 27 ['train-to-defense', 105], // Sleeves will go to the gym until they reach this much Def
+		Line 345 crimeName == "homicide" ? { difficulty: 1, strength_success_weight: 2, defense_success_weight: 2, dexterity_success_weight: 0.5, agility_success_weight: 0.5 } :
+		Line 346 crimeName == "mug" ? { difficulty: 0.2, strength_success_weight: 1.5, defense_success_weight: 0.5, dexterity_success_weight: 1.5, agility_success_weight: 0.5, } :
+		Line 351 (crimeStats.defense_success_weight || 0) * sleeve.defense +
+	work-for-factions.js
+		Line 67 "KuaiGong International", // 1.40 to agility, defense, strength
+		Line 401 const physicalStats = ["strength", "defense", "dexterity", "agility"];
+		Line 554 `Str: ${player.skills.strength}, Def: ${player.skills.defense}, Dex: ${player.skills.dexterity}, Agi: ${player.skills.agility})`);
+		Line 555 let anyStatsDeficient = (p) => p.skills.strength < reqStats || p.skills.defense < reqStats ||
+
+
+/dexterity/g
+The work system is completely reworked and ns.getPlayer().dexterity no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	bladeburner.js
+		Line 422 if (player.skills.strength < 100 || player.skills.defense < 100 || player.skills.dexterity < 100 || player.skills.agility < 100)
+		Line 424 `(Currently Str: ${player.skills.strength}, Def: ${player.skills.defense}, Dex: ${player.skills.dexterity}, Agi: ${player.skills.agility})`);
+	faction-manager.js
+		Line 65 const stat_multis = ["agility_exp", "agility", "charisma_exp", "charisma", "company_rep", "crime_money", "crime_success", "defense_exp", "defense", "dexterity_exp", "dexterity",
+		Line 205 .replace("agility", "agi").replace("strength", "str").replace("charisma", "cha").replace("defense", "def").replace("dexterity", "dex").replace("hacking", "hack")
+	sleeve.js
+		Line 7 const trainStats = ['strength', 'defense', 'dexterity', 'agility'];
+		Line 28 ['train-to-dexterity', 70], // Sleeves will go to the gym until they reach this much Dex
+		Line 345 crimeName == "homicide" ? { difficulty: 1, strength_success_weight: 2, defense_success_weight: 2, dexterity_success_weight: 0.5, agility_success_weight: 0.5 } :
+		Line 346 crimeName == "mug" ? { difficulty: 0.2, strength_success_weight: 1.5, defense_success_weight: 0.5, dexterity_success_weight: 1.5, agility_success_weight: 0.5, } :
+		Line 352 (crimeStats.dexterity_success_weight || 0) * sleeve.dexterity +
+	work-for-factions.js
+		Line 401 const physicalStats = ["strength", "defense", "dexterity", "agility"];
+		Line 554 `Str: ${player.skills.strength}, Def: ${player.skills.defense}, Dex: ${player.skills.dexterity}, Agi: ${player.skills.agility})`);
+		Line 556 /*                      */ p.skills.dexterity < reqStats || p.skills.agility < reqStats;
+
+
+/agility/g
+The work system is completely reworked and ns.getPlayer().agility no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	bladeburner.js
+		Line 422 if (player.skills.strength < 100 || player.skills.defense < 100 || player.skills.dexterity < 100 || player.skills.agility < 100)
+		Line 424 `(Currently Str: ${player.skills.strength}, Def: ${player.skills.defense}, Dex: ${player.skills.dexterity}, Agi: ${player.skills.agility})`);
+	faction-manager.js
+		Line 65 const stat_multis = ["agility_exp", "agility", "charisma_exp", "charisma", "company_rep", "crime_money", "crime_success", "defense_exp", "defense", "dexterity_exp", "dexterity",
+		Line 205 .replace("agility", "agi").replace("strength", "str").replace("charisma", "cha").replace("defense", "def").replace("dexterity", "dex").replace("hacking", "hack")
+	sleeve.js
+		Line 7 const trainStats = ['strength', 'defense', 'dexterity', 'agility'];
+		Line 29 ['train-to-agility', 70], // Sleeves will go to the gym until they reach this much Agi
+		Line 345 crimeName == "homicide" ? { difficulty: 1, strength_success_weight: 2, defense_success_weight: 2, dexterity_success_weight: 0.5, agility_success_weight: 0.5 } :
+		Line 346 crimeName == "mug" ? { difficulty: 0.2, strength_success_weight: 1.5, defense_success_weight: 0.5, dexterity_success_weight: 1.5, agility_success_weight: 0.5, } :
+		Line 353 (crimeStats.agility_success_weight || 0) * sleeve.agility +
+	work-for-factions.js
+		Line 67 "KuaiGong International", // 1.40 to agility, defense, strength
+		Line 401 const physicalStats = ["strength", "defense", "dexterity", "agility"];
+		Line 554 `Str: ${player.skills.strength}, Def: ${player.skills.defense}, Dex: ${player.skills.dexterity}, Agi: ${player.skills.agility})`);
+		Line 556 /*                      */ p.skills.dexterity < reqStats || p.skills.agility < reqStats;
+
+
+/charisma/g
+The work system is completely reworked and ns.getPlayer().charisma no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	faction-manager.js
+		Line 65 const stat_multis = ["agility_exp", "agility", "charisma_exp", "charisma", "company_rep", "crime_money", "crime_success", "defense_exp", "defense", "dexterity_exp", "dexterity",
+		Line 147 ['hacking', 'faction_rep', 'company_rep', 'charisma', 'hacknet', 'crime_money']; // Otherwise get hacking + rep boosting, etc. for unlocking augs more quickly
+		Line 205 .replace("agility", "agi").replace("strength", "str").replace("charisma", "cha").replace("defense", "def").replace("dexterity", "dex").replace("hacking", "hack")
+	sleeve.js
+		Line 354 (crimeStats.charisma_success_weight || 0) * sleeve.charisma;
+	work-for-factions.js
+		Line 117 ['hacking', 'faction_rep', 'company_rep', 'charisma', 'hacknet', 'crime_money']
+		Line 999 const getTier = job => Math.min(job.reqRep.filter(r => r <= currentReputation).length, job.reqHack.filter(h => h <= player.skills.hacking).length, job.reqCha.filter(c => c <= player.skills.charisma).length) - 1;
+		Line 1026 if (currentReputation >= requiredRep && player.skills.hacking >= requiredHack && player.skills.charisma < requiredCha && !options['no-studying']) {
+		Line 1039 if (requiredCha - player.skills.charisma > 10) { // Try to spend hacknet-node hashes on university upgrades while we've got a ways to study to make it go faster
+		Line 1089 `Cha:${player.skills.charisma} ${player.skills.charisma >= (requiredCha || 0) ? '✓' : '✗'} ` +
+	stanek.js.create.js
+		Line 154 }, { // Adds Charisma, which even a small boost makes a huge difference (hours) in grinding company rep // TODO: Consider adding charisma boosts a little earlier on in the prior 2 layouts.
+
+
+/intelligence/g
+The work system is completely reworked and ns.getPlayer().intelligence no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	daemon.js
+		Line 43 ['i', false], // Farm intelligence with manual hack.
+		Line 125 let currentTerminalServer = ""; // Periodically updated when intelligence farming, the current connected terminal server.
+		Line 849 // If required, determine the current terminal server (used when intelligence farming)
+		Line 1521 if (options.i) { // To farm intelligence, use manual hack on only the current connected server
+	farm-intelligence.js
+		Line 23 const tempFile = '/Temp/farm-intelligence.js';
+		Line 30 log(ns, `SUCCESS: Beginning soft-reset loop. It may look like nothing's happening, but watch your intelligence stat...`, true, 'success');
+
+
+/hacking_exp/g
+The work system is completely reworked and ns.getPlayer().hacking_exp no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	faction-manager.js
+		Line 66 "faction_rep", "hacking_chance", "hacking_exp", "hacking_grow", "hacking_money", "hacking", "hacking_speed", "strength_exp", "strength", "work_money",
+	work-for-factions.js
+		Line 457 `(${formatNumberShort(player.mults.hacking_exp)}), and bitnode hacking / study exp mults ` +
+
+
+/strength_exp/g
+The work system is completely reworked and ns.getPlayer().strength_exp no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	faction-manager.js
+		Line 66 "faction_rep", "hacking_chance", "hacking_exp", "hacking_grow", "hacking_money", "hacking", "hacking_speed", "strength_exp", "strength", "work_money",
+
+
+/defense_exp/g
+The work system is completely reworked and ns.getPlayer().defense_exp no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	faction-manager.js
+		Line 65 const stat_multis = ["agility_exp", "agility", "charisma_exp", "charisma", "company_rep", "crime_money", "crime_success", "defense_exp", "defense", "dexterity_exp", "dexterity",
+
+
+/dexterity_exp/g
+The work system is completely reworked and ns.getPlayer().dexterity_exp no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	faction-manager.js
+		Line 65 const stat_multis = ["agility_exp", "agility", "charisma_exp", "charisma", "company_rep", "crime_money", "crime_success", "defense_exp", "defense", "dexterity_exp", "dexterity",
+
+
+/agility_exp/g
+The work system is completely reworked and ns.getPlayer().agility_exp no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	faction-manager.js
+		Line 65 const stat_multis = ["agility_exp", "agility", "charisma_exp", "charisma", "company_rep", "crime_money", "crime_success", "defense_exp", "defense", "dexterity_exp", "dexterity",
+
+
+/charisma_exp/g
+The work system is completely reworked and ns.getPlayer().charisma_exp no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	faction-manager.js
+		Line 65 const stat_multis = ["agility_exp", "agility", "charisma_exp", "charisma", "company_rep", "crime_money", "crime_success", "defense_exp", "defense", "dexterity_exp", "dexterity",
+
+
+/hp/g
+The work system is completely reworked and ns.getPlayer().hp no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	sleeve.js
+		Line 250 if (sleeve.hp.current != sleeve.hp.max) // Assume if HP is not at max, they have started failing this task
+
+
+/hasTixApiAccess/g
+The work system is completely reworked and ns.getPlayer().hasTixApiAccess no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	stockmaster.js
+		Line 76 const hasTixApiAccess = await getNsDataThroughFile(ns, 'ns.stock.purchaseTixApi()', '/Temp/hasTIX.txt');
+		Line 78 if (!hasTixApiAccess) return log(ns, 'ERROR: Cannot liquidate stocks because we do not have Tix Api Access', true, 'error');
+		Line 110 if (!hasTixApiAccess) { // You cannot use the stockmaster until you have API access
+
+
+/has4SData/g
+The work system is completely reworked and ns.getPlayer().has4SData no longer exists. This data is likely available inside ns.getPlayer().currentWork, skills, exp, or hp
+
+	daemon.js
+		Line 848 have4sApi = have4sApi || await getNsDataThroughFile(ns, `ns.stock.has4SDataTIXAPI()`, `/Temp/stock-has4SDataTIXAPI.txt`);
+	gangs.js
+		Line 423 if (!ns.stock.has4SDataTIXAPI() || playerData.bitNodeN === 8) {
+	stockmaster.js
+		Line 597 * @param {"hasWSEAccount"|"hasTIXAPIAccess"|"has4SData"|"has4SDataTIXAPI"} stockFn
+	autopilot.js
+		Line 570 if (!options['disable-wait-for-4s'] && !(await getNsDataThroughFile(ns, `ns.stock.has4SDataTIXAPI()`, `/Temp/stock-has4SDataTIXAPI.txt`))) {
+		Line 572 const has4S = await getNsDataThroughFile(ns, `ns.stock.has4SData()`, `/Temp/stock-has4SData.txt`);
+	/Temp/stock-has4SDataTIXAPI.txt.js
+		Line 2 ns.stock.has4SDataTIXAPI()
+		Line 4 const f="/Temp/stock-has4SDataTIXAPI.txt"; if(ns.read(f)!==r) await ns.write(f,r,'w') }
+
+

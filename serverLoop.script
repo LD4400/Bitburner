@@ -1,0 +1,100 @@
+var cList = scan('home');
+//default max money
+var maxMon = 0;
+//default max server
+var maxSer = 'n00dles';
+var pList = getPurchasedServers();
+
+function checkRam(cServer, iServer){
+ 
+    var server = cServer;   //Host to hack
+    var server2 = iServer; //Server to run scripts on
+
+    var contstantRam = getScriptRam("/newserver/OP.ns.js"); //grabbing script RAM values
+    var hackscriptRam = getScriptRam("/newserver/hack.js");
+    var growscriptRam = getScriptRam("/newserver/grow.js");
+    var weakenscriptRam = getScriptRam("/newserver/weaken.js");
+    var maxRam = (getServerMaxRam(server2) - contstantRam); //getting total RAM I can use that doesnt include the OP script
+    var weakenThreads = (2000-((getServerMinSecurityLevel(server))/0.05));
+
+    //Refreshing server stats now that the security level is at the minmum, and maybe our player stats have changed as priming can take a while
+    var player = getPlayer();
+    var fserver = getServer(server);
+    
+    var HPercent = (formulas.hacking.hackPercent(fserver,player)*100);
+    var GPercent = (formulas.hacking.growPercent(fserver,1,player,1));
+    WeakenTime = (formulas.hacking.weakenTime(fserver,player));
+    
+    var growThreads = Math.round(((5/(GPercent-1)))); //Getting the amount of threads I need to grow 200%.  I only need 100% but I'm being conservative here
+    var hackThreads = Math.round((50/HPercent));  //Getting the amount of threads I need to hack 50% of the funds
+    weakenThreads = Math.round((weakenThreads - (growThreads*0.004))); //Getting required threads to fully weaken the server
+    
+    var totalRamForRun = (hackscriptRam*hackThreads)+(growscriptRam*growThreads)+(weakenscriptRam*weakenThreads) //Calculating how much RAM is used for a single run
+        
+    if (totalRamForRun>maxRam){ 
+        return false;
+    }
+    else{
+        return true;
+    }
+}
+
+//check servers for root access
+function checkAndFind(cServer, iServer, pServer){
+    //if server is within hack lvl and is not home
+    if(getServerRequiredHackingLevel(cServer) <= getHackingLevel() && cServer != 'home' && hasRootAccess(cServer) && !cServer.includes('pserv')){
+        if(checkRam(cServer, iServer)){
+            if(getServerMaxMoney(cServer) > maxMon){
+                maxSer = cServer;
+                maxMon = getServerMaxMoney(cServer);
+            }
+        }
+    }
+    //within scan lvl
+    var nList = scan(cServer);
+    if(nList.length > 0){
+        //search for servers with root access at other lvls
+        for(var i = 0; i < nList.length; i++){
+            if(nList[i] != 'home' && nList[i] != pServer){
+                checkAndFind(nList[i], iServer, cServer);
+            }
+        }
+    }
+}
+var savedSized = 0;
+var savedMax = 'n00dles';
+for(var y = 0; y < pList.length; y++){
+    //default max money
+    maxMon = 0;
+    //default max server
+    maxSer = 'n00dles';
+    if(getServerMaxRam(pList[y]) >= 8192  && fileExists('Formulas.exe') == true){
+        scp('/newserver/OP.ns.js', pList[y], 'home');
+        scp('/newserver/grow.js', pList[y], 'home');
+        scp('/newserver/hack.js', pList[y], 'home');
+        scp('/newserver/weaken.js', pList[y], 'home');
+        if(savedSized != getServerMaxRam(pList[y])){
+            //got through each server at first scan lvl
+            for(var x = 0; x < cList.length; x++){
+                //check servers with root access
+                checkAndFind(cList[x], pList[y], 'home');
+            }
+            savedSized = getServerMaxRam(pList[y]);
+            savedMax = maxSer;
+        }
+        else{
+            maxSer = savedMax;
+        }
+
+        if(!isRunning('/newserver/OP.ns.js', pList[y], maxSer)){
+            tprint("Max server for " + pList[y] + ": " + maxSer);
+            tprint("Rerunning script on " + pList[y]);
+            killall(pList[y]);
+            exec('/newserver/OP.ns.js', pList[y], 1, maxSer);
+        }
+    }
+    else if (fileExists('Formulas.exe') == false && getServerMaxRam(pList[y]) >= 8192){
+        tprint("Missing Formulas.exe");
+    }
+}
+tprint("Serverloop finished");

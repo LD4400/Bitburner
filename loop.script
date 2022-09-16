@@ -1,0 +1,80 @@
+//list for servers with root access
+var aList = args[1];
+//default max server
+var maxSer = args[0];
+//default max money
+var maxMon = 0;
+//get servers on first scan lvl
+var cList = scan('home');
+
+//run hack script with max threads
+function openAndRun(cServer, maxSer){
+    //figure out how many threads can run hack script
+    var maxRam = getServerMaxRam(cServer);
+    var thread = Math.round(maxRam/2.6);
+    if(thread * 2.6 > getServerMaxRam(cServer)){
+        thread = thread - 1;
+    }
+    //double check if server has root access
+    if(hasRootAccess(cServer)){
+        //skip if server is purchased server and is bigger than 8 tb
+        if(cServer.includes('pserv') && getServerMaxRam(cServer) >= 8192){
+            return
+        }
+        else if(cServer.includes("hacknet-node")){
+            return
+        }
+        //if hack script with max server is not already running, can be run on at least
+        //one thread and server has less ram to handle other hack script
+        else if(isRunning('early-hack.script', cServer, maxSer) == false && thread > 0){
+            tprint("Rerunning at " + cServer + " with " + thread + " threads");
+            //kill all scripts before rerunning
+            killall(cServer)
+            exec('early-hack.script', cServer, thread, maxSer);
+        }
+    }
+}
+
+function checkAndFind(cServer, pServer){
+	//if server is not already in  aList
+	if(!aList.includes(cServer) && hasRootAccess(cServer)){
+		if(getServerMoneyAvailable(cServer) > maxMon){
+			maxMon = getServerMoneyAvailable(cServer);
+			maxSer = cServer;
+		}
+		aList.push(cServer);
+		// exec('getLit.script', 'home', 1, cServer);
+	}
+    var nList = scan(cServer);
+	if(nList.length > 0){
+		//search for servers with root access at other lvls
+		for(var i = 0; i < nList.length; i++){
+			if(nList[i] != 'home' && nList[i] != pServer){
+				checkAndFind(nList[i], cServer);
+			}
+		}
+	}
+}
+
+if(aList == null || maxSer == null){
+    aList = [];
+    maxSer = 'n00dles';
+    for(var x = 0; x < cList.length; x++){
+		//check servers with root access
+		checkAndFind(cList[x], 'home');
+	}
+    for(var i = 0; i < aList.length; i++){
+        if(fileExists('early-hack.script',aList[i]) == false){
+            //copy hack script to server
+            scp('early-hack.script', aList[i]);
+        }
+        openAndRun(aList[i], maxSer);
+    }
+}
+else{
+    if(fileExists('early-hack.script',aList) == false){
+        //copy hack script to server
+        scp('early-hack.script', aList);
+    }
+    openAndRun(aList, maxSer);
+}

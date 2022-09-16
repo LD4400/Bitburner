@@ -1,0 +1,35 @@
+pList = getPurchasedServers()
+max = getPurchasedServerMaxRam()
+price = getPurchasedServerCost(max);
+servTotal = getPurchasedServerLimit();
+for(var x = 0; x < servTotal; x++){
+	var sName = "pserv-" + x;
+	if(pList.includes(sName)){
+		var curRam = getServerMaxRam(sName);
+	}
+	else{
+		tprint(sName + " does not exist.");
+		var curRam = 0;
+	}
+	tprint(sName + "'s current memory ram: " + curRam)
+	if(curRam < max){
+		tprint("Waiting to upgrade " + sName + " to " + max + " for $" + price);
+		if(isRunning('serverLoop.script') == true){
+			tprint("Restarting serverLoop.script and loop.script");
+			scriptKill('serverLoop.script', 'home');
+			scriptKill('loop.script', 'home')
+		}
+		if(pList.includes(sName)){
+			killall(sName);
+			tprint("Deleting " + sName)
+			deleteServer(sName);
+		}
+		while(!purchaseServer(sName, max)){
+			sleep(1);
+		}
+		exec('serverLoop.script', 'home', 1);
+		exec('loop.script', 'home', 1)
+	}
+}
+
+tprint("Purchased all maxed out servers");

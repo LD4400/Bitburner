@@ -1,0 +1,73 @@
+var numSleeves = sleeve.getNumSleeves();
+
+var continueShock = true
+var shockMin = 90
+var testShock = sleeve.getSleeveStats(numSleeves-1).shock
+if(testShock > shockMin){
+	for(var x = 0; x < numSleeves; x++){
+		tprint("Sleeve " + x + " set to shock recovery")
+		sleeve.setToShockRecovery(x);
+	}
+	while(continueShock){
+		continueShock = false
+		for(var x = 0 ; x < numSleeves; x++){
+			var shock = sleeve.getSleeveStats(x).shock;
+			if(shock > shockMin){
+				continueShock = true
+			}
+		}
+	}
+}
+
+if(!gang.inGang()){
+	for(var x = 0; x < numSleeves; x++){
+		tprint("Sleeve " + x + " set to homicide")
+		sleeve.setToCommitCrime(x, "homicide")
+	}
+	var karmaMin = -54000
+	var currKarma = heart.break()
+	while(currKarma > karmaMin){
+		currKarma = heart.break()
+		sleep(1)
+	}
+	tprint("Creating Gang")
+	singularity.joinFaction("Slum Snakes")
+	gang.createGang("Slum Snakes")
+	
+	while(getServerMaxRam('home') < 1000){
+		if(singularity.upgradeHomeRam()){
+			tprint("Upgrading home ram")
+		}
+	}
+	tprint('Stop spending hashes on coding contracts')
+	scriptKill('spend-hacknet-hashes.js', 'home')
+	exec('beginning.script', 'home', 1)
+}
+
+for(var x = 0; x < numSleeves; x ++){
+	tprint("Sleeve " + x + " set to bladeburner")
+	sleeve.setToBladeburnerAction(x, 'Field analysis')
+	tprint(sleeve.getTask(x))
+}
+var noShock = true
+var currShock = 0
+do{
+	noShock = true
+	for(var x = 0; x < numSleeves; x++){
+		currShock = sleeve.getSleeveStats(x).shock
+		var currTask = sleeve.getTask(x)
+		if(currShock > 0){
+			if(currShock < 10 && currTask.type != 'RECOVERY'){
+				tprint("Sleeve " + x + " set to shock recovery")
+				sleeve.setToShockRecovery(x)
+			}
+			noShock = false
+		}
+	}
+}while(!noShock)
+
+for(var x = 0; x < numSleeves; x++){
+	tprint("Sleeve " + x + " set to bladeburner")
+	sleeve.setToBladeburnerAction(x, 'Field analysis')
+	exec('sleeves2.script', 'home', 1, x)
+}

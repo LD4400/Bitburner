@@ -1,0 +1,19 @@
+runFiles= ['stats.js', 'sleeves.script', 'autocontract.ns', 'hacknet.js']
+tprint("Accepting Stanek Gift")
+stanek.acceptGift()
+for(each = 0; each < runFiles.length; each++){
+	tprint("Running " + runFiles[each])
+	exec(runFiles[each], 'home')
+}
+exec('crime.js', 'home', 1, 'homicide')
+while(getServerMoneyAvailable('home') < 200000){
+	sleep(1)
+}
+singularity.purchaseTor();
+runFiles = ['eraseAugs.script', 'root.script', 'hacknet.js']
+for(each = 0; each < runFiles.length; each++){
+	tprint("Running " + runFiles[each])
+	exec(runFiles[each], 'home')
+}
+tprint('Start spending hashes on coding contracts')
+exec('spend-hacknet-hashes.js', 'home', 1, '--spend-on', 'Generate_Coding_Contract')

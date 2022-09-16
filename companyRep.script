@@ -1,0 +1,72 @@
+//TODO write script to auto gain rep for companies
+var lCompanies = ["ECorp", "MegaCorp", "KuaiGong International", "Four Sigma",
+	"NWO", "Blade Industries", "OmniTek Incorporated", "Bachman & Associates",
+	"Clarke Incorporated", "Fulcrum Technologies"]
+
+function checkSleeve(status){
+	if(status.type == "CRIME"){
+		return true
+	}
+	else if(status.actionName == "Field Analysis"){
+		return true
+	}
+	else{
+		return false
+	}
+}
+
+function assignSleeve(companyName){
+	var numSleeves = sleeve.getNumSleeves();
+	var assignedSleeve = false;
+	//constantly check each sleeve
+	while(!assignedSleeve){
+		for(var x = numSleeves-1; x > 0; x--){
+			var status = sleeve.getTask(x);
+			if(checkSleeve(status) == true){
+				sleeve.setToCompanyWork(x, companyName)
+				tprint("Sleeve " + x + " assigned to work for " + companyName)
+				return x;			
+			}
+		}
+		
+	}
+	
+}
+
+//Make sure we have minimum hacking skill
+var hackStat = getPlayer()
+while(hackStat.skills.hacking < 275){
+	hackStat = getPlayer()
+	sleep(1)
+}
+//For each company
+for(var x = 0; x < lCompanies.length; x++){
+	//gather joinedFactions
+	var joinedFactions = getPlayer().factions
+	//apply to company
+	tprint("Applying for IT job at " + lCompanies[x])
+	singularity.applyToCompany(lCompanies[x], 'it')
+	//default value
+	var currentSleeve = 0;
+	//while company faction have not been joined
+	while(!joinedFactions.includes(lCompanies[x])){
+		//assign sleeve for work
+		var sleeveTask = sleeve.getTask(currentSleeve)
+		if(sleeveTask.type != 'COMPANY'){
+			currentSleeve = assignSleeve(lCompanies[x])
+		}
+		//promote
+		if(singularity.applyToCompany(lCompanies[x], 'it')){
+			tprint("Promoted at " + lCompanies[x])
+		}
+		//update joinedFactions list
+		joinedFactions = getPlayer().factions
+	}
+	//reset sleeve
+	sleeveTask = sleeve.getTask(currentSleeve)
+	if(sleeveTask.type == 'COMPANY'){
+		tprint("Resetting Sleeve " + currentSleeve + " to bladeburner")
+		sleeve.setToBladeburnerAction(currentSleeve, 'Field analysis')
+	}
+}
+tprint("Joined all companies")

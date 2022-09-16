@@ -1,0 +1,32 @@
+var script = args[0]
+if(script == null){
+	tprint("Needs a script")
+	exit
+}
+else if(args.length == 1){
+	if(!isRunning(script, 'home')){
+		tprint("Needs a running script")
+		exit
+	}
+	else{
+		tprint("Restarting " + script)
+		kill(script, 'home')
+		exec(script, 'home')
+	}
+}
+else if(args.length >= 2){
+	var argument = []
+	for(var x = 1; x < args.length; x++){
+		argument.push(args[x])
+	}
+	var argumentString = argument.join(" ")
+	if(!isRunning(script, 'home', argumentString)){
+		tprint("Needs a running script, check arguments")
+		exit
+	}
+	else{
+		tprint("Restarting " + script + " with argument, " + argumentString)
+		kill(script, 'home', argumentString)
+		exec(script, 'home', 1, argumentString)
+	}
+}

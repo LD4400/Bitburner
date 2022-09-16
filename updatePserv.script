@@ -1,0 +1,51 @@
+var reachedMax = false
+while(!reachedMax){
+	tprint("Checking for Pserv");
+	var cMon = getServerMoneyAvailable('home');
+	var pList = getPurchasedServers();
+	var bRam = 2;
+	var servTotal = getPurchasedServerLimit();
+	if(pList.length > 0){
+		bRam = getServerMaxRam(pList[0]);
+	}
+	var cRam = bRam;
+	var nRam = cRam * 2;
+	var nCost = getPurchasedServerCost(nRam);
+	var maxCost = getPurchasedServerCost(getPurchasedServerMaxRam());
+	while(cMon >= (nCost * servTotal) && nRam < getPurchasedServerMaxRam()){
+		cRam = nRam;
+		nRam = cRam * 2;
+		nCost = getPurchasedServerCost(nRam);
+	}
+	if(bRam == cRam){
+		tprint("Can't afford upgrade.")
+		tprint("Needs $" + (nCost*servTotal) + " for " + nRam + " ram");
+	}
+	else if(cRam > bRam){
+		tprint("Upgrading servers from " + bRam + " to " + cRam + " for $" + getPurchasedServerCost(cRam));
+		scriptKill('loop.script', 'home')
+		scriptKill('serverLoop.script', 'home')
+		for(var x = 0; x < servTotal; x++){
+			var sName = 'pserv-' + x;
+			if(pList.includes(sName)){
+				killall(sName);
+				tprint("Deleting " + sName)
+				deleteServer(sName);
+			}
+			tprint("Waiting to upgrade " + sName)
+			while(purchaseServer(sName, cRam) == false){
+				sleep(1000);
+			}
+		}
+		tprint("Restarting serverLoop.script and loopscript")
+		exec('serverLoop.script', 'home', 1)
+		exec('loop.script', 'home', 1)
+		if(cRam >= 8192){
+			tprint("Start maxPserv.script");
+			exec('maxPserv.script', 'home', 1)
+			reachedMax = true
+		}
+	}
+	sleep(300000)
+}
+tprint("Ending updatePserv")

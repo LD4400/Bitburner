@@ -1,0 +1,7 @@
+var iTotal = singularity.getOwnedAugmentations().length;
+var eTotal = iTotal + 11;
+while(iTotal < eTotal){
+	iTotal = singularity.getOwnedAugmentations(true).length;
+}
+tprint("Installing Augmentations")
+exec('ascend.js', 'home', 1, '--reset')

@@ -1,0 +1,28 @@
+//TODO: write program that would travel to cities depending on boughtout factions
+var cities = ["Chongqing", "Sector-12", "New Tokyo", "Ishima", "Aevum", "Volhaven"];
+var minMoney = 50000000
+while(getServerMoneyAvailable('home') < minMoney){
+	sleep(1)
+}
+for(var x = 0; x < cities.length; x++){
+	currCity = cities[x]
+	var boughtFactions = getboughtFactions()
+	if(boughtFactions.includes(currCity)){
+		continue
+	}
+	else{
+		tprint("Trying to join " + currCity + " faction.")
+		singularity.travelToCity(currCity)
+		boughtFactions = getboughtFactions()
+		while(!boughtFactions.includes(currCity)){
+			boughtFactions = getboughtFactions()
+		}
+	}
+}
+tprint("Bought all augmentations from city factions")
+
+function getboughtFactions(){
+	fileContents = read("boughtOutFactions.txt")
+	boughtFactions = fileContents.split("\r\n")
+	return boughtFactions
+}

@@ -1,0 +1,277 @@
+//merge sort for augs
+function merge(arr, l, m, r)
+{
+	var n1 = m - l + 1;
+	var n2 = r - m;
+
+	// Create temp arrays
+	var L = new Array(n1);
+	var R = new Array(n2);
+
+	// Copy data to temp arrays L[] and R[]
+	for (var i = 0; i < n1; i++)
+		L[i] = arr[l + i];
+	for (var j = 0; j < n2; j++)
+		R[j] = arr[m + 1 + j];
+
+	// Merge the temp arrays back into arr[l..r]
+
+	// Initial index of first subarray
+	var i = 0;
+
+	// Initial index of second subarray
+	var j = 0;
+
+	// Initial index of merged subarray
+	var k = l;
+
+	while (i < n1 && j < n2) {
+		if (singularity.getAugmentationPrice(L[i]) <= singularity.getAugmentationPrice(R[j])) {
+			arr[k] = L[i];
+			i++;
+		}
+		else {
+			arr[k] = R[j];
+			j++;
+		}
+		k++;
+	}
+
+	// Copy the remaining elements of
+	// L[], if there are any
+	while (i < n1) {
+		arr[k] = L[i];
+		i++;
+		k++;
+	}
+
+	// Copy the remaining elements of
+	// R[], if there are any
+	while (j < n2) {
+		arr[k] = R[j];
+		j++;
+		k++;
+	}
+}
+
+// l is for left index and r is
+// right index of the sub-array
+// of arr to be sorted */
+function mergeSort(arr,l, r){
+	if(l>=r){
+		return;//returns recursively
+	}
+	var m =l+ parseInt((r-l)/2);
+	mergeSort(arr,l,m);
+	mergeSort(arr,m+1,r);
+	merge(arr,l,m,r);
+}
+
+
+
+//Change Sleeve to gain reputation for factions
+function assignSleeve(faction){
+	var numSleeves = sleeve.getNumSleeves();
+	var currentSleeve = 0;
+	//check each sleeve
+	while(currentSleeve < numSleeves){
+		var status = sleeve.getTask(currentSleeve);
+		if(checkSleeve(status)){
+			if(sleeve.setToFactionWork(currentSleeve, faction, "Field Work") == false){
+				sleeve.setToFactionWork(currentSleeve, faction, "Hacking Contracts");
+				tprint("Sleeve " + currentSleeve + " doing Hacking Contracts for " + faction);
+			}
+			else{
+				tprint("Sleeve " + currentSleeve + " doing Field Work for " + faction);
+			}
+			return currentSleeve;			
+		}
+		currentSleeve += 1;
+	}
+	return 0;
+}
+function checkSleeve(status){
+	if(status.type == "CRIME" || status.type == "COMPANY"){
+		return true
+	}
+	else if(status.actionName == "Field Analysis"){
+		return true
+	}
+	else{
+		return false
+	}
+}
+
+//reset sleeve to default
+function resetSleeve(usingSleeve){
+		tprint("Sleeve " + usingSleeve + " set to bladeburner")
+		sleeve.setToBladeburnerAction(usingSleeve, 'Field analysis')
+}
+
+function checksPrereq(currAug, faction){
+	var reqList = singularity.getAugmentationPrereq(currAug)
+	if(reqList.length > 0){
+		for(var x = 0; x < reqList.length; x++){
+			var boughtList = singularity.getOwnedAugmentations(true)
+			if(!boughtList.includes(reqList[x])){
+				tprint("Missing prerequisites for augmentation, " + currAug)
+			}
+			while(!boughtList.includes(reqList[x])){
+				boughtList = singularity.getOwnedAugmentations(true)
+				if(singularity.purchaseAugmentation(faction, reqList[x])){
+					tprint("Bought " + currAug + ", augmentation from " + faction);
+				}
+				sleep(1)
+			}
+		}
+	}
+}
+
+function buyAugs(faction){
+	//get factions whose augs are already sorted
+	sortedFactions = readFile("SortedFactions.txt")
+	sortedFile = "/Sorted/"
+	if(faction == "Bachman & Associates"){
+		sortedFile = sortedFile + "BachmanAssociates_augs.txt"
+	}
+	else if(args.length > 1){
+		x = args.join("")
+		sortedFile = sortedFile + x + "_augs.txt"
+	}
+	else if(args[0].includes(" ")){
+		x = args[0].replace(" ", "")
+		while(x.includes(" ")){
+			x = x.replace(" ", "")
+		}
+		sortedFile = sortedFile + x + "_augs.txt"
+	}
+	else{
+		sortedFile = sortedFile + faction + "_augs.txt"
+	}
+	//sort augs
+	if(!sortedFactions.includes(faction)){
+		tprint("Merge sorting augmentations from " + faction);
+		print("Merge sorting augmentations from " + faction);
+		mergeSort(arr, 0, arr_size - 1);
+		tprint("Saving sorted augmentations to " + sortedFile)
+		writeArray(sortedFile, arr)
+		fileText = faction + "\r\n"
+		tprint("Adding " + faction + " to SortedFactions.txt")
+		write("SortedFactions.txt", fileText, 'a')
+	}
+	//get sorted augs
+	else if(sortedFactions.includes(faction)){
+		arr = readFile(sortedFile)
+	}
+	var bought = true;
+	var augIndex = 0;
+	tprint("Buying augmentations from " + faction);
+	print("Buying augmentations from " + faction);
+	var usingSleeve = 0;
+	//for each availible augs
+	while(augIndex < arr_size){
+		// //if no sleeve assigned and not excluded faction, assign sleeve
+		// if(usingSleeve == null && excludeFaction.includes(faction) == false){
+		// 	usingSleeve = assignSleeve(faction);
+		// }
+		boughtAugs = singularity.getOwnedAugmentations(true);
+		boughtAug = boughtAugs.length;
+		bought = true;
+		var currentAug = arr[augIndex];
+		//skip NeuroFlux augs 
+		if(currentAug.includes("NeuroFlux Governor")){
+			augIndex++;
+			continue;
+		}
+		checksPrereq(currentAug, faction)
+		//if you can't buy the aug	
+		while(!singularity.purchaseAugmentation(faction, currentAug)){
+			//exit if aug is already own
+			if(singularity.getOwnedAugmentations(true).includes(currentAug)){
+				bought = false;
+				break
+			}
+			var sleeveTask = sleeve.getTask(usingSleeve)
+			if(excludeFaction.includes(faction) == false && singularity.getFactionRep(faction) < 3300000){
+				if(sleeveTask.type != 'FACTION' || sleeveTask.factionName != faction){
+					usingSleeve = assignSleeve(faction)
+				}
+			}
+			else if(singularity.getFactionRep(faction) > 3300000){
+				if(sleeveTask.type == 'FACTION' && sleeveTask.factionName == faction){
+					tprint("Reputation for " + faction + " is over 3,300,000. Stopping sleeve")
+					resetSleeve(usingSleeve)
+				}
+			}
+			sleep(30000);
+		}
+		//newly bought aug
+		if(bought == true){
+			tprint("Bought " + currentAug + ", augmentation from " + faction);
+			tprint("Total bought augmentations: " + singularity.getOwnedAugmentations(true).length);
+			if(currentAug == "The Red Pill" && faction == "Daedalus"){
+				tprint("Installing Augmentations")
+				exec('ascend.js', 'home', 1)
+			}
+		}
+		augIndex++;
+	}
+	//bought all aug
+	tprint("Bought all " + faction + " augmentations from " + faction);
+	if(usingSleeve != null && usingSleeve > -1){
+		resetSleeve(usingSleeve)
+	}
+	fileText = faction + "\r\n"
+	tprint("Adding " + faction + " to boughtOutFactions.txt")
+	write("boughtOutFactions.txt", fileText, 'a')
+}
+//check for bought out factions
+function checkFaction(currentFaction){
+	listedFactions = readFile("boughtOutFactions.txt")
+	if(listedFactions.includes(currentFaction)){
+		return false;
+	}
+	else{
+		return true;
+	}
+}
+
+function readFile(fileName){
+	fileContents = read(fileName)
+	return fileContents.split("\r\n")
+}
+
+function writeArray(fileName, contents){
+	write(fileName, "", "w")
+	for(i = 0; i < contents.length; i++){
+		row = contents[i] + "\r\n"
+		write(fileName, row, "a")
+	} 
+}
+
+var currentFaction = "";
+var excludeFaction = ["Slum Snakes", "Bladeburners", "Church of the Machine God"]
+//if there's more arguments, combine them into one string
+if(args.length > 1){
+	currentFaction = args.join(" ");
+}
+//else only 1 argument
+else if(args.length == 1){
+	if(args[0] == "Sector"){
+		currentFaction = "Sector-12";
+	}
+	else{
+		currentFaction = args[0];
+	}
+}
+
+var arr = singularity.getAugmentationsFromFaction(currentFaction);
+var arr_size = arr.length;
+
+buyAugmentations = checkFaction(currentFaction);
+if(buyAugmentations){
+	buyAugs(currentFaction);
+}
+else{
+	tprint("All augmentations for " + currentFaction + " is already bought");
+}

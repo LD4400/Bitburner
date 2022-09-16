@@ -1,0 +1,81 @@
+var torCost = 200000
+var getTor = args[0];
+var excludeFactions = ["Sector-12", "Chongqing", "New Tokyo", "Ishima", "Aevum", "Volhaven"];
+var includeFactions = ["Slum Snakes", "Church of the Machine God", "Bladeburners"]
+function buyTor() {
+	while (getServerMoneyAvailable('home') < torCost) {
+		singularity.commitCrime('homicide')
+		sleep(3000)
+	}
+	singularity.purchaseTor()
+	tprint("Bought Tor");
+}
+
+function buyDarkWebStuff() {
+	var stuff = ['BruteSSH.exe', 'FTPCrack.exe', 'relaySMTP.exe', 'HTTPWorm.exe', 'SQLInject.exe', 'Formulas.exe'];
+	for (var x = 0; x < stuff.length; x++) {
+		if (fileExists(stuff[x]) == false) {
+			while (singularity.purchaseProgram(stuff[x]) == false) {
+				sleep(1);
+			}
+			tprint("Bought " + stuff[x]);
+		}
+		else {
+			tprint("Already have " + stuff[x]);
+		}
+	}
+}
+
+function startFunctions() {
+	var functions = ['root.script', 'autocontract.ns', 'sleeves.script', 'stats.js', 'stanek.js.create.js', 'stanek_copy.js', 'stockmaster.js', 'gang.js', 'bladeburner.js', 'checkAugs.script', 'hacknet.js', 'updatePserv.script', 'companyRep.script', 'cityRep.script'];
+	for (var x = 0; x < functions.length; x++) {
+		if (isRunning(functions[x], 'home') == false) {
+			tprint("Running " + functions[x]);
+			exec(functions[x], 'home');
+		}
+
+	}
+}
+
+function checkFactions() {
+	for (var x = 0; x < includeFactions.length; x++) {
+		tprint("Joined " + includeFactions[x])
+		kill('stanek_copy.js', 'home')
+		exec('factions.script', 'home', 1, includeFactions[x]);
+		exec('stanek_copy.js', 'home')
+	}
+	while (true) {
+		var factionArray = singularity.checkFactionInvitations();
+		if (factionArray.length > 0) {
+			for (var x = 0; x < factionArray.length; x++) {
+				if (excludeFactions.includes(factionArray[x])) {
+					fileContents = read("boughtOutFactions.txt")
+					boughtFactions = fileContents.split("\r\n")
+					if (boughtFactions.includes(factionArray[x]) == false) {
+						tprint("Joined " + factionArray[x]);
+						singularity.joinFaction(factionArray[x]);
+						kill('stanek_copy.js', 'home')
+						exec('factions.script', 'home', 1, factionArray[x]);
+						exec('stanek_copy.js', 'home')
+					}
+				}
+				else {
+					tprint("Joined " + factionArray[x]);
+					singularity.joinFaction(factionArray[x]);
+					kill('stanek_copy.js', 'home')
+					exec('factions.script', 'home', 1, factionArray[x]);
+					exec('stanek_copy.js', 'home')
+				}
+			}
+		}
+	}
+}
+if (getTor == false) {
+	tprint("Already have tor");
+}
+else if (getTor == null || getTor == true) {
+	buyTor()
+}
+startFunctions();
+buyDarkWebStuff();
+checkFactions();
